@@ -20,5 +20,5 @@ class Client:
             client_socket.close()
 
 if __name__ == "__main__":
-    client = Client('localhost', 23942)
+    client = Client('localhost', 60535)
     client.connect()
