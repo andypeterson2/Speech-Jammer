@@ -25,14 +25,19 @@ class ClientHandler:
             logging.info(f"Assigned ID {unique_id} to {self.addr}")
             self.conn.sendall(f"Your ID is {unique_id}".encode())
             while True:
-                data = self.conn.recv(1024)
-                if data.decode() == "ping":
-                    logging.info(f"Received 'ping' from ID {unique_id}, IP {self.addr[0]}, port {self.addr[1]} at {time.ctime()}")
-                    self.conn.sendall(b'pong')
+                query_id = self.conn.recv(1024).decode()
+                if query_id == unique_id:
+                    self.conn.sendall(b"That's your own ID.")
+                elif query_id in self.client_ids:
+                    ip, port = self.client_ids[query_id]
+                    self.conn.sendall(f"The IP is {ip} and the port is {port}".encode())
+                else:
+                    self.conn.sendall(b"ID doesn't exist.")
         except:
             logging.error(f"Failed to handle client {unique_id}")
         finally:
             self.conn.close()
+
 
 class Server:
     def __init__(self, host, port):
@@ -52,5 +57,5 @@ class Server:
             thread.start()
 
 if __name__ == "__main__":
-    server = Server('localhost', 60535)
+    server = Server('localhost', 60532)
     server.start()
