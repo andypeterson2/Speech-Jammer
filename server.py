@@ -2,6 +2,7 @@ import socket
 import threading
 import logging
 import hashlib
+import time
 
 logging.basicConfig(level=logging.INFO)
 
@@ -23,8 +24,13 @@ class ClientHandler:
             self.client_ids[unique_id] = self.addr
             logging.info(f"Assigned ID {unique_id} to {self.addr}")
             self.conn.sendall(f"Your ID is {unique_id}".encode())
+            while True:
+                data = self.conn.recv(1024)
+                if data.decode() == "ping":
+                    logging.info(f"Received 'ping' from ID {unique_id}, IP {self.addr[0]}, port {self.addr[1]} at {time.ctime()}")
+                    self.conn.sendall(b'pong')
         except:
-            logging.error("Failed to handle client connection")
+            logging.error(f"Failed to handle client {unique_id}")
         finally:
             self.conn.close()
 
