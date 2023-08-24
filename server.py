@@ -43,23 +43,34 @@ class ClientHandler(threading.Thread):
             logging.info(f"Assigned ID {unique_id} to {self.addr}")
             self.conn.sendall(f"Your ID is {unique_id}".encode())
             while True:
-                query_id = self.conn.recv(1024).decode()
-                if not query_id:
+                command = self.conn.recv(1024).decode()
+                if not command:
                     logging.info(f"Connection terminated by client {self.addr}")
                     break
-                elif query_id == unique_id:
-                    self.conn.sendall(b"That's your own ID.")
-                else:
-                    addr = self.user_id_manager.get_addr(query_id)
-                    if addr:
-                        ip, port = addr
-                        self.conn.sendall(f"The IP is {ip} and the port is {port}".encode())
-                    else:
-                        self.conn.sendall(b"ID doesn't exist.")
+                
+                if command == '1':
+                    self.check_id_existence()
+                elif command == '2':
+                    self.ping()
         except:
             logging.error(f"Failed to handle client {unique_id}")
         finally:
             self.conn.close()
+            
+    def check_id_existence(self):
+        query_id = self.conn.recv(1024).decode()
+        logging.info(f"Received ID check request from IP: {self.addr[0]}, Port: {self.addr[1]}")
+                
+        if query_id in self.user_id_manager.client_ids:
+            client_addr = self.user_id_manager.get_addr(query_id)
+            response = f"ID {query_id} exists with IP: {client_addr[0]} and Port: {client_addr[1]}"            
+        else:
+            response = "ID does not exist."
+        self.conn.sendall(response.encode())
+
+    def ping(self):
+        logging.info(f"Ping received from client {self.addr}")        
+        self.conn.sendall(b"Pong")
             
 if __name__ == "__main__":
     HOST = '127.0.0.1'
