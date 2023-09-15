@@ -133,3 +133,17 @@
 .session-content .chat #send:active, .session-content .right #quit:active {
     filter: brightness(.9);
 }
+
+.session-content #outgoing-video {
+    position: relative;
+    background-size: cover;
+    overflow: hidden;
+}
+
+.session-content #outgoing-video #outgoing-video-stream {
+    background-size: cover;
+    min-width: 100%;
+    min-height: 100%;
+    
+    /* overflow: hidden; */
+}

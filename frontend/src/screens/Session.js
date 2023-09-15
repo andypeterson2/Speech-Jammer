@@ -1,3 +1,4 @@
+import { useEffect, useState, useRef } from "react";
 import {useNavigate} from "react-router-dom";
 import Header from "../components/Header";
 
@@ -6,6 +7,39 @@ import { closeSession } from "../util/Auth";
 import '../css/Session.css';
 
 export default function Session() {
+
+    const [hasVideo, setHasVideo] = useState(false);
+    const [outSrc, setOutSrc] = useState(null);
+    const videoRef = useRef(null);
+
+    async function startVideo() {
+        if (hasVideo) return;
+        setHasVideo(true);
+        let videoStream = await window.electronAPI.startVideo();
+        console.log(videoStream);
+    }
+
+    // Request start of incoming video feed
+    useEffect(() => {
+        startVideo();
+    }, []);
+
+    // Start incoming video feed from my camera
+    useEffect(() =>{
+        async function getOutStream() {
+            const outStream = await navigator.mediaDevices.getUserMedia({video: true})
+
+            // setOutSrc(window.URL.createObjectURL(outStream))
+            setOutSrc(outStream)
+            let video = videoRef.current;
+            if (video) {
+                video.srcObject = outStream;
+                video.play();
+            }
+        }
+        getOutStream()
+    }, [videoRef])
+
     const navigate = useNavigate();
 
     const handleQuit = async () => {
@@ -34,11 +68,13 @@ export default function Session() {
                 </div>
                 <div className="right">
                     {/* Video Stream element is a temp placeholder */}
-                    <div className="video-stream" id="outgoing-video"></div>
+                    <div className="video-stream" id="outgoing-video">
+                        { outSrc ? <video ref={videoRef} autoPlay={true} playsInline={true} id="outgoing-video-stream" /> : null}
+                    </div>
                     <div className="chat">
                         <div className="messages">
                             <div className="message" id="incoming-message">
-                                <span>text from client 2</span>
+                                <span>text from client 2 words words words words </span>
                             </div>
                             <div className="message" id="outgoing-message">
                                 <span>text from client 1</span>
