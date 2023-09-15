@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import {useNavigate} from "react-router-dom";
+import {useNavigate, useLocation} from "react-router-dom";
 import Header from "../components/Header";
 
 import { closeSession } from "../util/Auth";
@@ -7,6 +7,9 @@ import { closeSession } from "../util/Auth";
 import '../css/Session.css';
 
 export default function Session() {
+
+    const location = useLocation();
+    const code = location.pathname.slice(-8);
 
     const [hasVideo, setHasVideo] = useState(false);
     const [outSrc, setOutSrc] = useState(null);
@@ -51,7 +54,10 @@ export default function Session() {
         <>
             <Header />
 
+
             <div className="session-content">
+                { code ? <h3 class="code">Code: {code}</h3> : null}
+
                 <div className="left">
                     <div className="video-stream" id="incoming-video"></div>
                     <div className="info">
