@@ -2,7 +2,7 @@
 import socket
 
 def Main():
-        host = 'Linksys-WRT54GL-Wireless-G'
+        host = '192.168.1.98'
         port = 5000
 
         mySocket = socket.socket()

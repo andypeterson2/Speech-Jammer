@@ -5,7 +5,7 @@ def Main():
     host = "0.0.0.0"
     port = 5000
 
-    print(socket.gethostname())
+    print(socket.gethostbyname(socket.gethostname()))
 
     mySocket = socket.socket()
     mySocket.bind((host,port))
