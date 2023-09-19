@@ -6,25 +6,35 @@ import { closeSession } from "../util/Auth";
 
 import '../css/Session.css';
 
-export default function Session() {
+export default function Session(props) {
 
     const location = useLocation();
     const code = location.pathname.slice(-8);
 
-    const [hasVideo, setHasVideo] = useState(false);
+    const startedSession = useRef(false);
     const [outSrc, setOutSrc] = useState(null);
     const videoRef = useRef(null);
 
-    async function startVideo() {
-        if (hasVideo) return;
-        setHasVideo(true);
-        let videoStream = await window.electronAPI.startVideo();
-        console.log(videoStream);
+    async function startHost() {
+        console.log('Sending Request to start Host');
+        let connection = await window.electronAPI.startHost();
+        console.log('Response: ' + connection);
     }
 
-    // Request start of incoming video feed
+    async function startClient() {
+        console.log('Sending Request to start Client');
+        let connection = await window.electronAPI.startClient();
+        console.log('Response: ' + connection);
+    }
+
+    // Start python session
     useEffect(() => {
-        startVideo();
+        if(!startedSession.current) {
+            if(props.host) startHost();
+            else if(props.client) startClient();
+        }
+
+        return () => startedSession.current = true;
     }, []);
 
     // Start incoming video feed from my camera
@@ -56,7 +66,7 @@ export default function Session() {
 
 
             <div className="session-content">
-                { code ? <h3 class="code">Code: {code}</h3> : null}
+                { code ? <h3 className="code">Code: {code}</h3> : null}
 
                 <div className="left">
                     <div className="video-stream" id="incoming-video"></div>

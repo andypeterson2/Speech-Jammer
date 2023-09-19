@@ -2,10 +2,73 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const isDev = require('electron-is-dev');
 const path = require('node:path')
 
-async function handleVideoStart() {
-    console.log('received request to start video from renderer');
-    return 'here is a video stream!';
+async function startSession(role) {
+    console.log('STARTING A SESSION YAY')
+    const {spawn} = require('child_process');
+    // const net = require('net');
+
+    // spawn new child process to call the python script
+    // const python = spawn('python3', [`../middleware/${role}.py`]);
+    const python = spawn('python3', [`middleware/test.py`]);
+        
+    // collect data from script
+    python.stdout.on('data', function (data) {
+        console.log(data)
+        console.log(data.toString())
+        console.log()
+        // dataToSend = data.toString();
+    });
+
+    // python.stderr.on('data', function (data) {
+    //     console.log(data.toString())
+    //     // console.log(data.toString())
+    //     // console.log()
+    //     // dataToSend = data.toString();
+    // });
+
+    // send 
+    
+    // in close event we are sure that stream from child process is closed
+    python.on('close', (code) => {
+        console.log(`child process close all stdio with code ${code}`);
+        // send data to browser
+    });
+
+    // HOW TO ENSURE PYTHON PROCESS IS KILLED WHEN ELECTRON DIES?
+
+    return 'Started!'
 }
+
+// async function startClient() {
+//     const express = require('express')
+//     const {spawn} = require('child_process');
+//     const exp = express()
+//     const port = 2000
+
+//     exp.get('/', (req, res) => {
+    
+//         var dataToSend;
+//         // spawn new child process to call the python script
+//         // const python = spawn('python3', [`../middleware/${role}.py`]);
+//         const python = spawn('python3', [`../middleware/test.py`]);
+//         // collect data from script
+//         python.stdout.on('data', function (data) {
+//             console.log('Pipe data from python script ...');
+//             dataToSend = data.toString();
+//         });
+//         // in close event we are sure that stream from child process is closed
+//         python.on('close', (code) => {
+//             console.log(`child process close all stdio with code ${code}`);
+//             // send data to browser
+//             res.send(dataToSend)
+//         });
+        
+//     })
+
+//     exp.listen(port, () => console.log(`Example app listening on port ${port}!`))
+
+//     return 'Started!'
+// }
 
 function createWindow() {
     // Create the browser window.
@@ -45,7 +108,8 @@ function createWindow() {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-    ipcMain.handle('video:start', handleVideoStart)
+    ipcMain.handle('session:host', () => startSession('host'))
+    ipcMain.handle('session:client', () => startSession('client'))
     createWindow()
 });
 
@@ -63,35 +127,3 @@ app.on('activate', () => {
     createWindow();
   }
 });
-
-
-
-
-
-// Start Python subprocess
-
-// const express = require('express')
-// const {spawn} = require('child_process');
-// const exp = express()
-// const port = 2000
-
-// exp.get('/', (req, res) => {
- 
-//     var dataToSend;
-//     // spawn new child process to call the python script
-//     const python = spawn('python3', ['../test.py']);
-//     // collect data from script
-//     python.stdout.on('data', function (data) {
-//         console.log('Pipe data from python script ...');
-//         dataToSend = data.toString();
-//     });
-//     // in close event we are sure that stream from child process is closed
-//     python.on('close', (code) => {
-//         console.log(`child process close all stdio with code ${code}`);
-//         // send data to browser
-//         res.send(dataToSend)
-//     });
-    
-// })
-
-// exp.listen(port, () => console.log(`Example app listening on port ${port}!`))

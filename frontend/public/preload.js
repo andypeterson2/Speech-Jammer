@@ -1,5 +1,6 @@
 const { contextBridge, ipcRenderer } = require('electron')
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  startVideo: () => ipcRenderer.invoke('video:start')
+    startHost: () => ipcRenderer.invoke('session:host'),
+    startClient: () => ipcRenderer.invoke('session:client')
 })
