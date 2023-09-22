@@ -4,14 +4,23 @@ const path = require('node:path')
 
 async function startSession(role) {
     console.log('STARTING A SESSION YAY')
-    const {spawn} = require('child_process');
-    // const net = require('net');
 
+    const {spawn} = require('child_process');
+    const net = require('net');
+    const PORT = 5001
+    
+    var client_server = net.createServer(function (conn) {
+        console.log('Received connection from python subprocess')
+        conn.write('Hello from Node.js')
+    })
+
+    client_server.listen(PORT, 'localhost')
+    
     // spawn new child process to call the python script
     // const python = spawn('python3', [`../middleware/${role}.py`]);
+    // TODO: INCLUDE PORT ARG FOR BEGINNING THE PYTHON PROCESS
     const python = spawn('python3', [`middleware/test.py`]);
         
-    // collect data from script
     python.stdout.on('data', function (data) {
         console.log(data)
         console.log(data.toString())
@@ -19,18 +28,17 @@ async function startSession(role) {
         // dataToSend = data.toString();
     });
 
-    // python.stderr.on('data', function (data) {
-    //     console.log(data.toString())
-    //     // console.log(data.toString())
-    //     // console.log()
-    //     // dataToSend = data.toString();
-    // });
+    python.stderr.on('data', function (data) {
+        console.log(data)
+        console.log(data.toString())
+        console.log()
+        // dataToSend = data.toString();
+    });
 
-    // send 
-    
     // in close event we are sure that stream from child process is closed
     python.on('close', (code) => {
         console.log(`child process close all stdio with code ${code}`);
+        socket.destroy();
         // send data to browser
     });
 
@@ -38,37 +46,6 @@ async function startSession(role) {
 
     return 'Started!'
 }
-
-// async function startClient() {
-//     const express = require('express')
-//     const {spawn} = require('child_process');
-//     const exp = express()
-//     const port = 2000
-
-//     exp.get('/', (req, res) => {
-    
-//         var dataToSend;
-//         // spawn new child process to call the python script
-//         // const python = spawn('python3', [`../middleware/${role}.py`]);
-//         const python = spawn('python3', [`../middleware/test.py`]);
-//         // collect data from script
-//         python.stdout.on('data', function (data) {
-//             console.log('Pipe data from python script ...');
-//             dataToSend = data.toString();
-//         });
-//         // in close event we are sure that stream from child process is closed
-//         python.on('close', (code) => {
-//             console.log(`child process close all stdio with code ${code}`);
-//             // send data to browser
-//             res.send(dataToSend)
-//         });
-        
-//     })
-
-//     exp.listen(port, () => console.log(`Example app listening on port ${port}!`))
-
-//     return 'Started!'
-// }
 
 function createWindow() {
     // Create the browser window.
@@ -81,10 +58,8 @@ function createWindow() {
         },
     });
 
-    win.maximize();
+    // win.maximize();
 
-    // and load the index.html of the app.
-    // win.loadFile("index.html");
     win.loadURL(
     isDev
         ? 'http://localhost:3000'

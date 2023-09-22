@@ -12,9 +12,9 @@ export default function Session(props) {
     const code = location.pathname.slice(-8);
 
     const startedSession = useRef(false);
-    const [outSrc, setOutSrc] = useState(null);
+    const [selfSrc, setSelfSrc] = useState(null);
     const videoRef = useRef(null);
-
+    
     async function startHost() {
         console.log('Sending Request to start Host');
         let connection = await window.electronAPI.startHost();
@@ -27,7 +27,14 @@ export default function Session(props) {
         console.log('Response: ' + connection);
     }
 
-    // Start python session
+    const navigate = useNavigate();
+
+    const handleQuit = async () => {
+        await closeSession();
+        navigate('/');
+    }
+
+    // Attempt to start python Client
     useEffect(() => {
         if(!startedSession.current) {
             if(props.host) startHost();
@@ -42,8 +49,7 @@ export default function Session(props) {
         async function getOutStream() {
             const outStream = await navigator.mediaDevices.getUserMedia({video: true})
 
-            // setOutSrc(window.URL.createObjectURL(outStream))
-            setOutSrc(outStream)
+            setSelfSrc(outStream)
             let video = videoRef.current;
             if (video) {
                 video.srcObject = outStream;
@@ -52,13 +58,6 @@ export default function Session(props) {
         }
         getOutStream()
     }, [videoRef])
-
-    const navigate = useNavigate();
-
-    const handleQuit = async () => {
-        await closeSession();
-        navigate('/');
-    }
 
     return (
         <>
@@ -85,7 +84,7 @@ export default function Session(props) {
                 <div className="right">
                     {/* Video Stream element is a temp placeholder */}
                     <div className="video-stream" id="outgoing-video">
-                        { outSrc ? <video ref={videoRef} autoPlay={true} playsInline={true} id="outgoing-video-stream" /> : null}
+                        { selfSrc ? <video ref={videoRef} autoPlay={true} playsInline={true} id="outgoing-video-stream" /> : null}
                     </div>
                     <div className="chat">
                         <div className="messages">

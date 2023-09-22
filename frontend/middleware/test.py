@@ -1,31 +1,14 @@
 import time
 import socket
 
-host = "0.0.0.0"
-port = 5000
-
-print('Addr: ' + str(socket.gethostbyname(socket.gethostname())))
+PORT = 5001
 
 ## peer_sock = socket.socket()
-print('1')
 client_sock = socket.socket()
-print('2')
-client_sock.bind((host,port))
-print('3')
-client_sock.listen(1)
-print('4')
+client_sock.connect(('127.0.0.1',PORT))
 
-# conn, addr = client_sock.accept()
-print('received connection request')
+data = client_sock.recv(1024)
+print('Python client received and printing ' + str(data))
+client_sock.sendall(('Python client received and returning ' + str(data)).encode('UTF-8'))
 
-# while True:
-    # data = conn.recv(1024)
-    ## if data.decode() == 'exit': break
-    ## peer_sock.send(data)
-    # print('hehe')
-
-for i in range(10):
-    print(i)
-    time.sleep(1)
-
-# conn.close()
+client_sock.close()
