@@ -1,31 +1,34 @@
 .header {
-    font-family: var(--heading-font)  
+    font-family: var(--heading-font);
+    color: var(--off-white);
+    width: 100vw;
+    height: 10vh;
+
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 20px 0;
 }
 
 .header h1 {
-    position: absolute;
-    top: 40px;
-    left: 50%;
-    transform: translate(-50%);
-    font-size: 80px;
+    font-size: min(80px,5vw);
     font-weight: 400;
     margin: 0;
 }
 
 .header img#logo {
-    position: absolute;
-    top: 40px;
-    left: 40px;
-
-    /* max-width: 175px; */
-    max-height: 100px;
+    max-height: calc(15vh - 40px);
 }
 
-.header .waveforms {
-    position: absolute;
-    top: 40p;
-    right: 40px;
-    
-    font-size: 32px;
-    color: var(--waveformsblue)
+.waiting {
+    color: var(--light-grey)
+}
+
+.bad {
+    color: var(--bad)
+}
+
+.good {
+    color: var(--good)
 }

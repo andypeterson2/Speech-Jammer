@@ -11,50 +11,53 @@
 .session-content {
     position: relative;
     display: flex;
-    height: 100vh;
+    flex-direction: column;
+    height: 90vh;
     width: 100vw;
 
-    padding: 50px;
-    padding-top: 200px;
+    padding: 30px;
 }
 
-.session-content .left {
-    flex: 13;
+.session-content .top {
     display: flex;
-    flex-direction: column;
-    margin-right: 25px;
-}
-
-.session-content .left .info {
-    display: flex;
-    height: auto;
     flex-direction: row;
-    justify-content: space-around;
-    align-items: center;
-    flex-grow: 1;
+}
+
+.session-content #spacer {
+    width: 5%;
 }
 
 .session-content .video-stream {
+    position: relative;
+    background-size: cover;
+    overflow: hidden;
     aspect-ratio: 16/9;
     width: 100%;
     background-color: black;
+    border: 7px solid #0000FF;
 }
 
-.session-content .right {
-    display: flex;
-    flex-direction: column;
-    flex: 7;
-    margin-left: 25px;
-}
-
-.session-content .right .chat {
+.session-content .bottom {
     flex-grow: 1;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    height: auto;
+}
+
+.session-content .bottom > * {
+    margin: 0 20px;
+}
+
+.session-content .chat {
     display: flex;
     flex-direction: column;
     margin-top: 20px;
     
     background-color: rgb(216, 216, 216);
-    border-radius: 10px;
+
+    border: 7px #0000FF solid;
 }
 
 .session-content .chat .messages {
@@ -66,7 +69,8 @@
 }
 
 .session-content .chat .message {
-    margin: 5px 10px 0px;
+    margin: 15px 10px 0px;
+    font-family: var(--heading-font)
 }
 
 .session-content .chat .message span {
@@ -90,6 +94,7 @@
     display: flex;
     flex-direction: row;
 
+    
     width: 100%;
 }
 
@@ -105,6 +110,8 @@
 }
 
 .session-content .chat #send {
+    display: none;
+
     border:none;
     width: 75px;
     height: 50px;
@@ -141,16 +148,10 @@
     filter: brightness(.9);
 }
 
-.session-content #outgoing-video {
-    position: relative;
-    background-size: cover;
-    overflow: hidden;
-}
-
-.session-content #outgoing-video #outgoing-video-stream {
+.session-content video {
     background-size: cover;
     min-width: 100%;
     min-height: 100%;
     
-    /* overflow: hidden; */
+    overflow: hidden;
 }

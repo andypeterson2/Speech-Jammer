@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import {useNavigate, useLocation} from "react-router-dom";
 import Header from "../components/Header";
+import CircleWidget from "../components/widgets/CircleWidget";
+import RectangleWidget from "../components/widgets/RectangleWidget";
 
 import { closeSession } from "../util/Auth";
 
@@ -63,36 +65,31 @@ export default function Session(props) {
         <>
             <Header />
 
-
             <div className="session-content">
                 { code ? <h3 className="code">Code: {code}</h3> : null}
 
-                <div className="left">
+                <div class="top">
                     <div className="video-stream" id="incoming-video"></div>
-                    <div className="info">
-                        <div id="key-accumulation">
-                            <span>Accumulated Secret Key</span>
-                        </div>
-                        <div id="key-rate">
-                            <span>Key Rate</span>
-                        </div>
-                        <div id="error-rate">
-                            <span>Error Rate</span>
-                        </div>
-                    </div>
-                </div>
-                <div className="right">
-                    {/* Video Stream element is a temp placeholder */}
+                    <div id="spacer"></div>
                     <div className="video-stream" id="outgoing-video">
                         { selfSrc ? <video ref={videoRef} autoPlay={true} playsInline={true} id="outgoing-video-stream" /> : null}
                     </div>
+                </div>
+
+                <div class="bottom">
+                    <RectangleWidget topText="Accumulated Secret Key"># Mbits</RectangleWidget>
+
+                    <CircleWidget topText="Key Rate" bottomText="Mbits/s">3.33</CircleWidget>
+                    
+                    <CircleWidget topText="Error Rate %" bottomText="Mbits">0.2</CircleWidget>
+                    
                     <div className="chat">
                         <div className="messages">
-                            <div className="message" id="incoming-message">
-                                <span>text from client 2 words words words words </span>
+                            <div className="message">
+                                <span>[ti:me] &#60;Client 2&#62; text from client 2</span>
                             </div>
-                            <div className="message" id="outgoing-message">
-                                <span>text from client 1</span>
+                            <div className="message">
+                                <span>[ti:me] &#60;Client 1&#62; text from client 1</span>
                             </div>
                         </div>
                         <form className="typing">
@@ -101,7 +98,7 @@ export default function Session(props) {
                         </form>
                     </div>
 
-                    <button id="quit" onClick={handleQuit}>End Session</button>
+                    {/* <button id="quit" onClick={handleQuit}>End Session</button> */}
                 </div>
             </div>
         </>
