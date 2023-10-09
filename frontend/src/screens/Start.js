@@ -20,7 +20,8 @@ export default function Start() {
             <Header />
             <div className="start-content">
                 <div className="codeForm">
-                <button onClick={handleStart}>Start Session</button>
+                    {/* TODO: Make these buttons be components instead */}
+                    <button onClick={handleStart}>Start Session</button>
                     <button onClick={handleJoin}>Join Session</button>
                 </div>
             </div>
