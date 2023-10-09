@@ -13,7 +13,7 @@ export default function RectangleWidget(props) {
     return(
         <div className="rectangle-widget">
             <div>{props.topText}</div>
-            <div class={`rectangle ${props.status}`}>{props.children}</div>
+            <div className={`rectangle ${props.status}`}>{props.children}</div>
         </div>
     );
 }

@@ -1,3 +1,7 @@
+.circle-widget, .circle-widget * {
+    cursor: default;
+}
+
 .circle-widget {
     position: relative;
     font-family: var(--heading-font);
@@ -30,7 +34,7 @@
 }
 
 .circle.good {
-    border-color: var(--good)
+    border-color: var(--good-rate)
 }
 
 .circle-widget div:not(.circle) {

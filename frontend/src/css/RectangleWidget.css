@@ -1,3 +1,6 @@
+.rectangle-widget, .rectangle-widget * {
+    cursor: default;
+}
 
 .rectangle-widget {
     position: relative;
