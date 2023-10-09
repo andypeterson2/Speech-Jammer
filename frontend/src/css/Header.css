@@ -1,4 +1,10 @@
+.header, .header * {
+    cursor: default;
+}
+
 .header {
+    position: relative;
+
     font-family: var(--heading-font);
     color: var(--off-white);
     width: 100vw;
@@ -12,6 +18,12 @@
 }
 
 .header h1 {
+    position: absolute;
+    /* Just looks better at top: 65% tbh */
+    top: 65%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+
     font-size: min(80px,5vw);
     font-weight: 400;
     margin: 0;
@@ -19,16 +31,4 @@
 
 .header img#logo {
     max-height: calc(15vh - 40px);
-}
-
-.waiting {
-    color: var(--light-grey)
-}
-
-.bad {
-    color: var(--bad)
-}
-
-.good {
-    color: var(--good)
 }
