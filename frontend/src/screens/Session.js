@@ -87,7 +87,7 @@ export default function Session(props) {
                     <div className="video-wrapper" id="left-video">
                         <VideoPlayer loading={props.status != "good"} srcObject={selfSrc2} id="peer-stream" status={props.status}/>
                     </div>
-                    <div class="vert-spacer"></div>
+                    <div className="vert-spacer"></div>
                     <div className="video-wrapper" id="right-video">
                         <VideoPlayer srcObject={selfSrc} id="self-stream" status={props.status}/>
                     </div>
@@ -108,7 +108,7 @@ export default function Session(props) {
                     </CircleWidget>
                     <div className="vert-spacer"></div>
 
-                    <div class="chat-wrapper">
+                    <div className="chat-wrapper">
                         <Chat messages={messages} handleSend={handleChat} status={props.status}/>
                     </div>
 
