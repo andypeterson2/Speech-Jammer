@@ -14,7 +14,7 @@ export default function CircleWidget(props) {
     return(
         <div className="circle-widget">
             <div>{props.topText}</div>
-            <div class={`circle ${props.status}`}>{props.children}</div>
+            <div className={`circle ${props.status}`}>{props.children}</div>
             <div>{props.bottomText}</div>
         </div>
     );

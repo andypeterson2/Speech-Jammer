@@ -1,101 +1,115 @@
-import { useEffect, useState, useRef } from "react";
-import {useNavigate, useLocation} from "react-router-dom";
+import { useEffect, useState } from "react";
+import {useLocation} from "react-router-dom";
 import Header from "../components/Header";
+import StatusPopup from "../components/StatusPopup";
+import VideoPlayer from "../components/VideoPlayer";
 import CircleWidget from "../components/widgets/CircleWidget";
 import RectangleWidget from "../components/widgets/RectangleWidget";
+import Chat from "../components/chat/Chat";
 
-import { closeSession } from "../util/Auth";
+// import { closeSession } from "../util/Auth";
+// import {handleChat} from "../util/API.js";
 
 import '../css/Session.css';
 
+/*
+ * props.status: str
+ *      - waiting
+ *      - bad
+ *      - good
+ */
 export default function Session(props) {
 
     const location = useLocation();
     const code = location.pathname.slice(-8);
 
-    const startedSession = useRef(false);
+    // const startedSession = useRef(false);
     const [selfSrc, setSelfSrc] = useState(null);
-    const videoRef = useRef(null);
-    
-    async function startHost() {
-        console.log('Sending Request to start Host');
-        let connection = await window.electronAPI.startHost();
-        console.log('Response: ' + connection);
-    }
+    const [selfSrc2, setSelfSrc2] = useState(null);
 
-    async function startClient() {
-        console.log('Sending Request to start Client');
-        let connection = await window.electronAPI.startClient();
-        console.log('Response: ' + connection);
-    }
+    const [messages, setMessages] = useState([
+        {
+            time: "ti:me",
+            name: "Client 1",
+            body: "text from client 1"
+        }, {
+            time: "ti:me",
+            name: "Client 2",
+            body: "text from client 2"
+        }
+    ]);
 
-    const navigate = useNavigate();
+    // TODO: Should instead be defined in another util file (e.g., ../util/API.js)
+    function handleChat(message) {
+        console.log("Message Sent: " + message);
 
-    const handleQuit = async () => {
-        await closeSession();
-        navigate('/');
-    }
-
-    // Attempt to start python Client
-    useEffect(() => {
-        if(!startedSession.current) {
-            if(props.host) startHost();
-            else if(props.client) startClient();
+        var date = new Date();
+        const time = date.toLocaleTimeString()
+        const messageObj = {
+            time: time.substring(0,time.length-6),
+            name: "Client 1",
+            body: message
         }
 
-        return () => startedSession.current = true;
-    }, []);
+        setMessages([...messages, messageObj]);
+    }
+
+    // const navigate = useNavigate();
+
+    // const handleQuit = async () => {
+    //     await closeSession();
+    //     navigate('/');
+    // }
 
     // Start incoming video feed from my camera
     useEffect(() =>{
         async function getOutStream() {
+            console.log('Session: Attempting to setSelfSrc()')
             const outStream = await navigator.mediaDevices.getUserMedia({video: true})
-
             setSelfSrc(outStream)
-            let video = videoRef.current;
-            if (video) {
-                video.srcObject = outStream;
-                video.play();
-            }
+            setSelfSrc2(outStream)
         }
+        console.log('Session: Running useEffect()')
         getOutStream()
-    }, [videoRef])
+    },[])
 
     return (
         <>
-            <Header />
+            <Header status={props.status} />
+
+            {props.status == "bad" ? <StatusPopup/> : null}
 
             <div className="session-content">
+                {/* Add a copy button instead of allowing text selection */}
                 { code ? <h3 className="code">Code: {code}</h3> : null}
 
-                <div class="top">
-                    <div className="video-stream" id="incoming-video"></div>
-                    <div id="spacer"></div>
-                    <div className="video-stream" id="outgoing-video">
-                        { selfSrc ? <video ref={videoRef} autoPlay={true} playsInline={true} id="outgoing-video-stream" /> : null}
+                <div className="top">
+                    <div className="video-wrapper" id="left-video">
+                        <VideoPlayer loading={props.status != "good"} srcObject={selfSrc2} id="peer-stream" status={props.status}/>
+                    </div>
+                    <div class="vert-spacer"></div>
+                    <div className="video-wrapper" id="right-video">
+                        <VideoPlayer srcObject={selfSrc} id="self-stream" status={props.status}/>
                     </div>
                 </div>
 
-                <div class="bottom">
-                    <RectangleWidget topText="Accumulated Secret Key"># Mbits</RectangleWidget>
+                <div className="bottom">
 
-                    <CircleWidget topText="Key Rate" bottomText="Mbits/s">3.33</CircleWidget>
-                    
-                    <CircleWidget topText="Error Rate %" bottomText="Mbits">0.2</CircleWidget>
-                    
-                    <div className="chat">
-                        <div className="messages">
-                            <div className="message">
-                                <span>[ti:me] &#60;Client 2&#62; text from client 2</span>
-                            </div>
-                            <div className="message">
-                                <span>[ti:me] &#60;Client 1&#62; text from client 1</span>
-                            </div>
-                        </div>
-                        <form className="typing">
-                            <input type="text" name="Message" id="text" placeholder="Message"/>
-                            <input type="submit" value="Send" id="send"/>
-                        </form>
+                    <RectangleWidget topText="Accumulated Secret Key" status={props.status}>
+                        {props.status == "good" ? "# Mbits" : "..."}
+                    </RectangleWidget>
+                    <div className="vert-spacer"></div>
+                    <CircleWidget topText="Key Rate" bottomText="Mbits/s" status={props.status}>
+                        {props.status == "good" ? "3.33" : "..."}
+                    </CircleWidget>
+                    <div className="vert-spacer"></div>
+                    <CircleWidget topText="Error Rate %" bottomText="Mbits" status={props.status}>
+                        {props.status == "good" ? "0.2" : "..."}
+                    </CircleWidget>
+                    <div className="vert-spacer"></div>
+
+                    <div class="chat-wrapper">
+                        <Chat messages={messages} handleSend={handleChat} status={props.status}/>
                     </div>
 
                     {/* <button id="quit" onClick={handleQuit}>End Session</button> */}
