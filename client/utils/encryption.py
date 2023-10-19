@@ -65,37 +65,91 @@ class DebugEncryption(EncryptionScheme):
     def get_name(self):
         return self.name
     
-
+import numpy as np
 class AESEncryption(EncryptionScheme):
     def __init__(self, bits=128):
         self.bits = bits
         self.name = f"AES-{bits}"
+        self.results = []
         
     # data and key are bit arrays
     # using AES-CBC
     def encrypt(self, data, key):
-        data = data.tobytes()
-        key = key.tobytes()
-        cipher = AES.new(key, AES.MODE_CBC)
-        cipheredData = cipher.encrypt(pad(data, AES.block_size))
-        result_data = bitarray()
-        result_data.frombytes(cipheredData)
-        result_iv = bitarray()
-        result_iv.frombytes(cipher.iv)
-        return result_iv + result_data
+        # return data
+        # print("encrypt ", key)
+        # ones = np.frombuffer(b'F' * (len(data)), dtype = np.uint8)
+        # data = np.frombuffer(data, dtype = np.uint8).copy()
+        # # print(len(ones), len(data))
+        # data = (data^ones).tobytes()
+        # return data
+        # data = np.frombuffer(data, dtype = np.uint8)
+        # key = np.frombuffer(key * (len(data)//len(key)), dtype = np.uint8)
+        # data = (data^key).tobytes()
+        # return data
+        # return data[len(data)//2:] + data[:len(data)//2]
+        # key = bitarray([i % 2 for i in range(128)]).tobytes()
+        # data = data.tobytes()
+        # key = key.tobytes()
+        # print("encrypt")
+        cipher = AES.new(key, AES.MODE_CBC, iv=b'0'*16)
+        # print("cipher: ", cipher)
+        cipheredData = cipher.encrypt(data)
+        # cipheredData = cipher.encrypt(pad(data, AES.block_size))
+        # print("ciphered data: ", cipheredData)
+        # result_data = bitarray()
+        # result_data.frombytes(cipheredData)
+        # result_iv = bitarray()
+        # result_iv.frombytes(cipher.iv)
+        result_data = cipheredData
+        result_iv = cipher.iv
+        # print("encrypted")
+        return result_data
+        # print("encrypted")
+        # return result_iv + result_data
     
     # data and key are bit arrays
     # data contains iv and encrypted data
     def decrypt(self, data, key):
-        key = key.tobytes()
-        iv = data[:128] #iv always has 128 bits
-        cipheredData = data[128:]
-        iv = iv.tobytes()
-        cipheredData = cipheredData.tobytes()
-        cipher = AES.new(key, AES.MODE_CBC, iv=iv)
-        originalData = unpad(cipher.decrypt(cipheredData), AES.block_size)
-        result = bitarray()
-        result.frombytes(originalData)
+        # return data
+        # print("decrypt ", key)
+        # ones = np.frombuffer(b'F' * (len(data)), dtype = np.uint8)
+        # data = np.frombuffer(data, dtype = np.uint8).copy()
+        # data = (data^ones).tobytes()
+        # return data
+        # data = np.frombuffer(data, dtype = np.uint8)
+        # key = np.frombuffer(key * (len(data)//len(key)), dtype = np.uint8)
+        # data = (data^key).tobytes()
+        # return data
+        # data = [data[i:i+len(key)]^key for i in range(0, len(data), len(key))]
+        # return data
+        # return data[len(data)//2:] + data[:len(data)//2]
+        # key = bitarray([i % 2 for i in range(128)]).tobytes()
+        # key = key.tobytes()
+        # print("recv")
+        # iv = data[:16] #iv always has 128 bits
+        iv = b'0'*16
+        # cipheredData = data[16:]
+        cipheredData = data
+        # print("to", str(iv), len(cipheredData))
+        # print("ciphered data: ", len(cipheredData))
+        # iv = iv.tobytes()
+        # cipheredData = cipheredData.tobytes()
+        # print("recv")
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+        # print("cipher: ", cipher)
+        # print("cipher: ", cipher)
+        # print("deciphered data: ", len(cipher.decrypt(cipheredData)))
+        # originalData = cipher.decrypt(cipheredData)
+        decrypted = cipher.decrypt(cipheredData)
+        # print("decrypted: ", decrypted)
+        # print("decrypted: ", len(decrypted), decrypted[-16:])
+        # originalData = unpad(decrypted, AES.block_size)
+        # print("original data: ", len(originalData))
+        # print("original data: ", len(originalData))
+        # result = bitarray()
+        # result.frombytes(originalData)
+        result = decrypted
+        # print("done")
         return result
     
     def get_name(self):
