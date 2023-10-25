@@ -11,7 +11,7 @@ from bitarray import bitarray
 import sounddevice as sd
 sample_rate = 44100
 key = []
-# sample_rate = 8196
+sample_rate = 8196
 
 import cv2
 import numpy as np
@@ -68,6 +68,20 @@ async def run(pc: RTCPeerConnection, signaling, role, encryption: EncryptionSche
             video_channel.send(data)
             await asyncio.sleep(1/30)
             
+    async def send_audio(audio_channel):
+        audio = pyaudio.PyAudio()
+        stream = audio.open(format=pyaudio.paInt16, channels=1, rate=sample_rate, input=True, frames_per_buffer=1920)
+
+        while True:
+            if not key_queue["audio"].empty():
+                key["audio"] = await key_queue["audio"].get()
+
+            data = stream.read(1920, exception_on_overflow=False)
+            
+            if encryption is not None:
+                data = encryption.encrypt(data, key["audio"])
+            audio_channel.send(data)
+            await asyncio.sleep(1/5)
 
     @pc.on("datachannel")
     def on_datachannel(channel: RTCDataChannel):
@@ -99,22 +113,65 @@ async def run(pc: RTCPeerConnection, signaling, role, encryption: EncryptionSche
                 cv2.imshow("recv", data)
                 cv2.waitKey(1)
 
+        # Audio key channel
+        elif channel.label == "audio key":
+            key_channel = channel
+
+            @key_channel.on("message")
+            async def on_message(message):
+                await key_queue["audio"].put(message)
+
+        # Audio data channel
+        elif channel.label == "audio data":
+            audio_channel = channel
+
+            audio = pyaudio.PyAudio()
+            stream = audio.open(format=pyaudio.paInt16, channels=1, rate=sample_rate, output=True, frames_per_buffer=1920)
+            stream.start_stream()
+
+            @audio_channel.on("message")
+            async def on_message(message):
+                if not key_queue["audio"].empty():
+                    key["audio"] = await key_queue["audio"].get()
+
+                data = message
+                if encryption is not None:
+                    data = encryption.decrypt(data, key["audio"])
+                
+                stream.write(data, exception_on_underflow=False)
+
     await signaling.connect()
 
     print("Ready for signaling")
 
     if role == "offer":
         # send offer
-        key_channel = pc.createDataChannel("video key")
-        @key_channel.on("open")
+
+        # video key channel
+        video_key_channel = pc.createDataChannel("video key")
+        @video_key_channel.on("open")
         async def on_open():
-            asyncio.ensure_future(send_keys(key_channel, key_queue["video"]))
+            asyncio.ensure_future(send_keys(video_key_channel, key_queue["video"]))
             pass
 
+        # video data channel
         video_channel = pc.createDataChannel("video data")
         @video_channel.on("open")
         async def on_open():
             asyncio.ensure_future(send_video(video_channel))
+
+        # audio key channel
+        audio_key_channel = pc.createDataChannel("audio key")
+        @audio_key_channel.on("open")
+        async def on_open():
+            asyncio.ensure_future(send_keys(audio_key_channel, key_queue["audio"]))
+            pass
+
+        # audio data channel
+        audio_channel = pc.createDataChannel("audio data")
+        @audio_channel.on("open")
+        async def on_open():
+            asyncio.ensure_future(send_audio(audio_channel))
 
         await pc.setLocalDescription(await pc.createOffer())
         await signaling.send(pc.localDescription)
