@@ -9,9 +9,6 @@ import time
 from bitarray import bitarray
 
 import sounddevice as sd
-sample_rate = 44100
-key = []
-sample_rate = 8196
 
 import cv2
 import numpy as np
@@ -33,8 +30,15 @@ from utils.encryption import AESEncryption, RandomKeyGenerator, KeyGeneratorFact
 async def run(pc: RTCPeerConnection, signaling, role, encryption: EncryptionScheme=None):
     key_gen = KeyGeneratorFactory().create_key_generator("RANDOM")
     key_gen.generate_key(key_length=128)
+
     display_shape = (720, 960, 3)
-    video_shape = (120, 160, 3)
+    video_shapes = [(120, 160, 3), (240, 320, 3), (480, 640, 3), (720, 960, 3)]
+    video_shape = video_shapes[1]
+    frame_rate = 30
+
+    sample_rates = [8196, 44100]
+    sample_rate = sample_rates[0]
+    frames_per_buffer = 1920
 
     key_queue = {"video": asyncio.Queue(), "audio": asyncio.Queue()}
     key = {"video": key_gen.get_key().tobytes(), "audio": key_gen.get_key().tobytes()}
@@ -49,7 +53,7 @@ async def run(pc: RTCPeerConnection, signaling, role, encryption: EncryptionSche
             await asyncio.sleep(1)
 
     async def send_video(video_channel):
-        cam = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(0)
         # doesn't work
         # cam.set(cv2.CAP_PROP_FRAME_WIDTH, video_shape[1])
         # cam.set(cv2.CAP_PROP_FRAME_HEIGHT, video_shape[0])
@@ -58,7 +62,7 @@ async def run(pc: RTCPeerConnection, signaling, role, encryption: EncryptionSche
             if not key_queue["video"].empty():
                 key["video"] = await key_queue["video"].get()
 
-            result, image = cam.read()
+            result, image = cap.read()
             image = cv2.resize(image, (video_shape[1], video_shape[0]))
             data = image.tobytes()
 
@@ -66,17 +70,17 @@ async def run(pc: RTCPeerConnection, signaling, role, encryption: EncryptionSche
                 data = encryption.encrypt(data, key["video"])
 
             video_channel.send(data)
-            await asyncio.sleep(1/30)
+            await asyncio.sleep(1/frame_rate)
             
     async def send_audio(audio_channel):
         audio = pyaudio.PyAudio()
-        stream = audio.open(format=pyaudio.paInt16, channels=1, rate=sample_rate, input=True, frames_per_buffer=1920)
+        stream = audio.open(format=pyaudio.paInt16, channels=1, rate=sample_rate, input=True, frames_per_buffer=frames_per_buffer)
 
         while True:
             if not key_queue["audio"].empty():
                 key["audio"] = await key_queue["audio"].get()
 
-            data = stream.read(1920, exception_on_overflow=False)
+            data = stream.read(frames_per_buffer, exception_on_overflow=False)
             
             if encryption is not None:
                 data = encryption.encrypt(data, key["audio"])
@@ -126,7 +130,7 @@ async def run(pc: RTCPeerConnection, signaling, role, encryption: EncryptionSche
             audio_channel = channel
 
             audio = pyaudio.PyAudio()
-            stream = audio.open(format=pyaudio.paInt16, channels=1, rate=sample_rate, output=True, frames_per_buffer=1920)
+            stream = audio.open(format=pyaudio.paInt16, channels=1, rate=sample_rate, output=True, frames_per_buffer=frames_per_buffer)
             stream.start_stream()
 
             @audio_channel.on("message")
