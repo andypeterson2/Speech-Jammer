@@ -35,10 +35,11 @@ async def run(pc: RTCPeerConnection, signaling, role, encryption: EncryptionSche
     key_gen = KeyGeneratorFactory().create_key_generator("RANDOM")
     key_gen.generate_key(key_length=128)
 
-    display_shape = (720, 960, 3)
+    display_shapes = [(720, 960, 3), (720, 1280, 3)]
+    display_shape = display_shapes[0]
     video_shapes = [(120, 160, 3), (240, 320, 3), (480, 640, 3), (720, 960, 3), (1080, 1920, 3)]
-    video_shape = video_shapes[3]
-    frame_rate = 120
+    video_shape = video_shapes[2]
+    frame_rate = 30
 
     sample_rates = [8196, 44100]
     sample_rate = sample_rates[0]
@@ -71,9 +72,11 @@ async def run(pc: RTCPeerConnection, signaling, role, encryption: EncryptionSche
             r=frame_rate
         )
 
-        output = ffmpeg.output(inpipe, 'pipe:', vcodec='libx264', f='ismv')
+        output = ffmpeg.output(inpipe, 'pipe:', vcodec='libx264', f='ismv', preset='ultrafast', tune='zerolatency')
 
         while True:
+            start = time.time()
+
             if not key_queue["video"].empty():
                 key["video"] = await key_queue["video"].get()
 
@@ -81,15 +84,17 @@ async def run(pc: RTCPeerConnection, signaling, role, encryption: EncryptionSche
             image = cv2.resize(image, (video_shape[1], video_shape[0]))
             data = image.tobytes()
 
-            # print("start", len(data))
             data = output.run(input=data, capture_stdout=True, quiet=True)[0]
-            # print("end", len(data))
 
             if encryption is not None:
                 data = encryption.encrypt(data, key["video"])
 
             video_channel.send(data)
-            await asyncio.sleep(1/frame_rate/3)
+
+            end = time.time()
+            print("max send framerate:", 1/(end-start))
+
+            await asyncio.sleep(1/frame_rate/5)
             
     async def send_audio(audio_channel):
         audio = pyaudio.PyAudio()
@@ -126,24 +131,26 @@ async def run(pc: RTCPeerConnection, signaling, role, encryption: EncryptionSche
 
             @video_channel.on("message")
             async def on_message(message):
-                try:
-                    cv2.namedWindow("recv", cv2.WINDOW_NORMAL)
-                    cv2.resizeWindow("recv", display_shape[1], display_shape[0])
-                    if not key_queue["video"].empty():
-                        key["video"] = await key_queue["video"].get()
+                start = time.time()
 
-                    data = message
-                    if encryption is not None:
-                        data = encryption.decrypt(data, key["video"])
+                cv2.namedWindow("recv", cv2.WINDOW_NORMAL)
+                cv2.resizeWindow("recv", display_shape[1], display_shape[0])
+                if not key_queue["video"].empty():
+                    key["video"] = await key_queue["video"].get()
 
-                    data = output.run(input=data, capture_stdout=True, quiet=True)[0]
+                data = message
+                if encryption is not None:
+                    data = encryption.decrypt(data, key["video"])
 
-                    data = np.frombuffer(data, dtype=np.uint8).reshape(video_shape)
+                data = output.run(input=data, capture_stdout=True, quiet=True)[0]
 
-                    cv2.imshow("recv", data)
-                    cv2.waitKey(1)
-                except Exception as e:
-                    print(e)
+                data = np.frombuffer(data, dtype=np.uint8).reshape(video_shape)
+
+                cv2.imshow("recv", data)
+                cv2.waitKey(1)
+
+                end = time.time()
+                print("max recv framerate:", 1/(end-start))
 
         # Audio key channel
         elif channel.label == "audio key":
