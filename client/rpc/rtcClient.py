@@ -7,10 +7,14 @@ import pyaudio
 import platform
 import time
 from bitarray import bitarray
+import io
 
 import sounddevice as sd
 
 import cv2
+import av
+import ffmpeg
+
 import numpy as np
 from aiortc import (
     RTCIceCandidate,
@@ -32,9 +36,9 @@ async def run(pc: RTCPeerConnection, signaling, role, encryption: EncryptionSche
     key_gen.generate_key(key_length=128)
 
     display_shape = (720, 960, 3)
-    video_shapes = [(120, 160, 3), (240, 320, 3), (480, 640, 3), (720, 960, 3)]
-    video_shape = video_shapes[1]
-    frame_rate = 30
+    video_shapes = [(120, 160, 3), (240, 320, 3), (480, 640, 3), (720, 960, 3), (1080, 1920, 3)]
+    video_shape = video_shapes[3]
+    frame_rate = 120
 
     sample_rates = [8196, 44100]
     sample_rate = sample_rates[0]
@@ -53,11 +57,22 @@ async def run(pc: RTCPeerConnection, signaling, role, encryption: EncryptionSche
             await asyncio.sleep(1)
 
     async def send_video(video_channel):
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(1)
+        
         # doesn't work
         # cam.set(cv2.CAP_PROP_FRAME_WIDTH, video_shape[1])
         # cam.set(cv2.CAP_PROP_FRAME_HEIGHT, video_shape[0])
-        
+
+        inpipe = ffmpeg.input(
+            'pipe:', 
+            format='rawvideo', 
+            pix_fmt='rgb24', 
+            s='{}x{}'.format(video_shape[1], video_shape[0]), 
+            r=frame_rate
+        )
+
+        output = ffmpeg.output(inpipe, 'pipe:', vcodec='libx264', f='ismv')
+
         while True:
             if not key_queue["video"].empty():
                 key["video"] = await key_queue["video"].get()
@@ -66,11 +81,15 @@ async def run(pc: RTCPeerConnection, signaling, role, encryption: EncryptionSche
             image = cv2.resize(image, (video_shape[1], video_shape[0]))
             data = image.tobytes()
 
+            # print("start", len(data))
+            data = output.run(input=data, capture_stdout=True, quiet=True)[0]
+            # print("end", len(data))
+
             if encryption is not None:
                 data = encryption.encrypt(data, key["video"])
 
             video_channel.send(data)
-            await asyncio.sleep(1/frame_rate)
+            await asyncio.sleep(1/frame_rate/3)
             
     async def send_audio(audio_channel):
         audio = pyaudio.PyAudio()
@@ -102,20 +121,29 @@ async def run(pc: RTCPeerConnection, signaling, role, encryption: EncryptionSche
         elif channel.label == "video data":
             video_channel = channel
 
+            inpipe = ffmpeg.input('pipe:')
+            output = ffmpeg.output(inpipe, 'pipe:', format='rawvideo', pix_fmt='rgb24')
+
             @video_channel.on("message")
             async def on_message(message):
-                cv2.namedWindow("recv", cv2.WINDOW_NORMAL)
-                cv2.resizeWindow("recv", display_shape[1], display_shape[0])
-                if not key_queue["video"].empty():
-                    key["video"] = await key_queue["video"].get()
+                try:
+                    cv2.namedWindow("recv", cv2.WINDOW_NORMAL)
+                    cv2.resizeWindow("recv", display_shape[1], display_shape[0])
+                    if not key_queue["video"].empty():
+                        key["video"] = await key_queue["video"].get()
 
-                data = message
-                if encryption is not None:
-                    data = encryption.decrypt(data, key["video"])
-                data = np.frombuffer(data, dtype=np.uint8).reshape(video_shape)
+                    data = message
+                    if encryption is not None:
+                        data = encryption.decrypt(data, key["video"])
 
-                cv2.imshow("recv", data)
-                cv2.waitKey(1)
+                    data = output.run(input=data, capture_stdout=True, quiet=True)[0]
+
+                    data = np.frombuffer(data, dtype=np.uint8).reshape(video_shape)
+
+                    cv2.imshow("recv", data)
+                    cv2.waitKey(1)
+                except Exception as e:
+                    print(e)
 
         # Audio key channel
         elif channel.label == "audio key":
