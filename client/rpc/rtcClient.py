@@ -39,11 +39,12 @@ async def run(pc: RTCPeerConnection, signaling, role, encryption: EncryptionSche
     display_shape = display_shapes[0]
     video_shapes = [(120, 160, 3), (240, 320, 3), (480, 640, 3), (720, 960, 3), (1080, 1920, 3)]
     video_shape = video_shapes[2]
-    frame_rate = 30
+    frame_rate = 15
 
     sample_rates = [8196, 44100]
     sample_rate = sample_rates[0]
-    frames_per_buffer = 1920
+    frames_per_buffer = sample_rate//6
+    audio_wait = 1/8
 
     key_queue = {"video": asyncio.Queue(), "audio": asyncio.Queue()}
     key = {"video": key_gen.get_key().tobytes(), "audio": key_gen.get_key().tobytes()}
@@ -69,7 +70,7 @@ async def run(pc: RTCPeerConnection, signaling, role, encryption: EncryptionSche
             format='rawvideo', 
             pix_fmt='rgb24', 
             s='{}x{}'.format(video_shape[1], video_shape[0]), 
-            r=frame_rate
+            r=frame_rate,
         )
 
         output = ffmpeg.output(inpipe, 'pipe:', vcodec='libx264', f='ismv', preset='ultrafast', tune='zerolatency')
@@ -105,11 +106,11 @@ async def run(pc: RTCPeerConnection, signaling, role, encryption: EncryptionSche
                 key["audio"] = await key_queue["audio"].get()
 
             data = stream.read(frames_per_buffer, exception_on_overflow=False)
-            
+
             if encryption is not None:
                 data = encryption.encrypt(data, key["audio"])
             audio_channel.send(data)
-            await asyncio.sleep(1/5)
+            await asyncio.sleep(audio_wait)
 
     @pc.on("datachannel")
     def on_datachannel(channel: RTCDataChannel):
@@ -177,7 +178,7 @@ async def run(pc: RTCPeerConnection, signaling, role, encryption: EncryptionSche
                 if encryption is not None:
                     data = encryption.decrypt(data, key["audio"])
                 
-                stream.write(data, exception_on_underflow=False)
+                stream.write(data, num_frames=frames_per_buffer, exception_on_underflow=False)
 
     await signaling.connect()
 
@@ -259,6 +260,7 @@ if __name__ == "__main__":
     # HOST = '128.54.191.80'
     # HOST = '100.115.52.50'
     # HOST = '0.0.0.0'
+    # HOST = '100.80.231.1'
     PORT = '65431'
     signaling_parser = argparse.ArgumentParser()
     add_signaling_arguments(signaling_parser)
