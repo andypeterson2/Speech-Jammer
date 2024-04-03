@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import {useLocation} from "react-router-dom";
+import {useLocation, useNavigate} from "react-router-dom";
 import Header from "../components/Header";
 import StatusPopup from "../components/StatusPopup";
 import VideoPlayer from "../components/VideoPlayer";
@@ -38,6 +38,12 @@ export default function Session(props) {
             body: "text from client 2"
         }
     ]);
+
+    const navigate = useNavigate();
+
+    const handleReturn = () => {
+        navigate('/start');
+    }
 
     // TODO: Should instead be defined in another util file (e.g., ../util/API.js)
     function handleChat(message) {

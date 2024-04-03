@@ -9,14 +9,19 @@ import "../css/Start.css"
 
 export default function Join() {
     const navigate = useNavigate();
+
     const [code, setCode] = useState("");
     const [error, setError] = useState({
         open: false,
         message: "An error has occured.",
     });
-
+    
     function handleCodeChange(e) {
         setCode(e.target.value);
+    }
+    
+    const handleReturn = () => {
+        navigate('/start');
     }
 
     const handleSubmit = async (e) => {
@@ -29,7 +34,7 @@ export default function Join() {
         else setError({...error, open: true})
     }
 
-    const handleClose = (e, reason) =>{
+    const handleClose = (e, reason) => {
         if(reason === "clickaway") return;
         setError({...error, open: false})
     }
@@ -41,8 +46,10 @@ export default function Join() {
                 <form className="codeForm" onSubmit={handleSubmit}>
                     <input type="text" placeholder="Code" name="code" id="code" onChange={handleCodeChange}/>
                     <button type="submit">Connect</button>
+                    <button onClick={handleReturn}>Return</button>
                 </form>
             </div>
+
 
             <Snackbar
                 open={error.open}
