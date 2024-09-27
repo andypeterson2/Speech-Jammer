@@ -30,12 +30,21 @@
 }
 
 .session-content .video-wrapper {
+    border: 7px solid var(--neutral);
+
     position: relative;
     
-    aspect-ratio: 16/9 !important;
-    max-width: calc(calc(16 / 9) * 50vh);
+    aspect-ratio: 4/3 !important;
+    /* max-width: calc(calc(16 / 9) * 50vw); */
+    max-width: 45vw;
     max-height: 50vh;
-    flex: 1;
+    /* flex: 1; */
+
+    overflow: hidden;
+}
+
+.video-wrapper #peer-stream {
+
 }
 
 .session-content .vert-spacer {

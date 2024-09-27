@@ -113,10 +113,12 @@ export default function Session(props) {
 				<div className="top">
 					{/* <div className="video-wrapper" id="left-video"> */}
 					{/* Make this come from the backend code so it's the same size*/}
-					<canvas id="peer-stream" min-width="640" min-height="480" object-fit="contain"height="auto" width="auto">
-						{" "}
-						Please wait...{" "}
-					</canvas>
+                    <div className="video-wrapper">
+                        <canvas id="peer-stream" width="100%" height="100%" object-fit="fill">
+                            {" "}
+                            Please wait...{" "}
+                        </canvas>
+                    </div>
 					{/* </div> */}
 					<div className="vert-spacer" />
 					<div className="video-wrapper" id="right-video">
